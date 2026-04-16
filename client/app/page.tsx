@@ -6,6 +6,7 @@ import React, { useState, useEffect } from 'react';
 export default function Home(){
   const [searchWord, setSearchWord] = useState("");
   const [videos ,setVideos] = useState<any[]>([]);
+  const [selectedInstrument,setSelectedInstrument] = useState("all");
 
   //画面が表示されたとき
   useEffect(()=>{ //useEffectにより変更によるリロードを最小限に抑える
@@ -26,20 +27,35 @@ export default function Home(){
     { id: '2', title: 'Set the fire', artist: 'SHANK', instrument: 'Bass' }
   ];
 
-  const handleSearch =(type:'title' | 'artist') =>{
-    if(!searchWord) return alert('No KeyWord');
-  
-    if(type=='title'){
-    alert(`Serching ${searchWord} in 【曲名】`);
-    }else{
-      alert(`Serching ${searchWord} in 【アーティスト名】`);
+  const handleSearch = async (type:'title' | 'artist') =>{
+    if(!searchWord){
+      // 検索ワードが空なら全件取得に戻す
+      const res = await fetch('http://localhost:5000/api/videos');
+      const data = await res.json();
+      setVideos(data);
+      return;
     }
+    try{
+      const res = await fetch(`http://localhost:5000/api/videos?search=${searchWord}&type=${type}&instrument=${selectedInstrument}`);
+      console.log(`http://localhost:5000/api/videos?search=${searchWord}&type=${type}でリクエストを送信しました`)
+      const data = await res.json();
+      setVideos(data)
+    }catch(error){
+        console.error("検索に失敗しました",error);
+    }
+    
   };
   return(
     <div className="min-h-screen bg-gray-50 text-gray-900">
       <header className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold text-blue-600">TABTube</h1>
+          <img
+            src="/logo.png"
+            alt="TABTube Logo"
+            width={150}
+            height={40}
+            className="object-contain"
+          />
           {/*ヘッダーボタン */}
           <nav className="flex gap-2 mb-6">
             <button className="border px-4 py-1 rounded bg-white shadow-sm">新規掲載</button>
@@ -71,9 +87,29 @@ export default function Home(){
           </div>
           
           <div className="mt-4 flex gap-4 justify-center text-sm">
+            <label>
+              <input
+                type="radio"
+                name="instrument"
+                checked={selectedInstrument == "all"}
+                onChange={()=>setSelectedInstrument("all")}
+              />すべて
+            </label>
             <label className="flex items-center gap-1 cursor-pointer">
-              <input type="checkbox" className="accent-blue-600"/>ギター
-              <input type="checkbox" className="accent-blue-600"/>ベース
+              <input
+                type="radio"
+                name="instrument"
+                checked={selectedInstrument == "Guitar"}
+                onChange={()=>setSelectedInstrument("Guitar")}
+              />ギター
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="instrument"
+                checked={selectedInstrument == "Bass"}
+                onChange={()=>setSelectedInstrument("Bass")}
+              />ベース
             </label>
           </div>
         </section>
@@ -85,19 +121,18 @@ export default function Home(){
             <span className="text-blue-600 text-sm cursor-pointer hover:underline">すべて見る</span>
           </div>
           <div>
-            {videos.map((video) => (
+            {Array.isArray(videos) && videos.map((video) => (
               <div key={video.id} className="group cursor-pointer">
-                {/* サムネイル（仮） */}
                 <div className="aspect-video bg-gray-200 rounded-xl overflow-hidden relative mb-3">
                   <img
-                  src={`https://img.youtube.com/vi/${video.youtube_id}/modefault.jpg`}
+                  src={`https://img.youtube.com/vi/${video.youtube_id}/mqdefault.jpg`}
                   alt="thumbnail"
                   className="w-full h-full object-cover"
                   /> 
                 </div>
             {/*情報 */}
               <h4 className="font-bold text-lg">{video.title}</h4>
-              <p className="text-gray-500">{video.artist} ({video.instrument})</p>
+              <p className="text-gray-500">{video.artist_name} ({video.instrument})</p>
             </div>
             ))}
           </div>
