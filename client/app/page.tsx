@@ -2,11 +2,76 @@
 
 import React, { useState, useEffect } from 'react';
 
+//URLからYouTube IDを抽出する関数
+const extractYoutubeId = (url: string) => {
+  if (!url) return null;
+
+  // 1. まずは一般的なYouTube URLのパターンを試す
+  const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+  const matches = url.match(regex);
+  
+  if (matches && matches[1]) {
+    return matches[1];
+  }
+
+  // 2. パターンに漏れた場合でも、11桁のIDが直接入力されている可能性を考慮
+  // (IDは英数字、ハイフン、アンダースコアの組み合わせ)
+  if (url.length === 11) {
+    return url;
+  }
+
+  return null;
+};
 
 export default function Home(){
   const [searchWord, setSearchWord] = useState("");
   const [videos ,setVideos] = useState<any[]>([]);
   const [selectedInstrument,setSelectedInstrument] = useState("all");
+  const [newVideo, setNewVideo] = useState({
+    youtube_id: "",
+    title:"",
+    artist_name: "",
+    instrument: "Guitar"
+  });
+
+  const handleSubmit = async (e: React.FormEvent) =>{
+    console.log("新規登録を開始します")
+    e.preventDefault();
+
+    console.log("入力されたURL:", newVideo.youtube_id);
+    const videoId = extractYoutubeId(newVideo.youtube_id);
+    console.log("抽出されたID:", videoId); // ここが null だと弾かれます
+
+    if (!videoId) {
+      alert(`YouTube IDを抽出できませんでした。\n入力: ${newVideo.youtube_id}`);
+      return;
+    }
+
+    const submitData = {
+      ...newVideo,
+      youtube_id: videoId //youtube_idに上書き
+    };
+
+    try {
+      const response = await fetch('http://localhost:5000/api/videos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(submitData),
+      
+    });
+
+    if(response.ok){
+      alert("登録完了");
+      setNewVideo({ youtube_id: "", title: "", artist_name: "", instrument: "Guitar" });
+      //登録後再読み込み
+      const res = await fetch('http://localhost:5000/api/videos');
+      const data = await res.json();
+      setVideos(data);
+    }
+  }catch(error){
+      console.error("登録失敗",error);
+    }
+  }
 
   //画面が表示されたとき
   useEffect(()=>{ //useEffectにより変更によるリロードを最小限に抑える
@@ -124,11 +189,14 @@ export default function Home(){
             {Array.isArray(videos) && videos.map((video) => (
               <div key={video.id} className="group cursor-pointer">
                 <div className="aspect-video bg-gray-200 rounded-xl overflow-hidden relative mb-3">
-                  <img
-                  src={`https://img.youtube.com/vi/${video.youtube_id}/mqdefault.jpg`}
-                  alt="thumbnail"
-                  className="w-full h-full object-cover"
-                  /> 
+                  <a href={`https://youtu.be/${video.youtube_id}`} target="_blank">
+                    <img
+                    src={`https://img.youtube.com/vi/${video.youtube_id}/mqdefault.jpg`}
+                    alt="thumbnail"
+                    className="w-full h-full object-cover"
+                  />
+                  </a>
+                   
                 </div>
             {/*情報 */}
               <h4 className="font-bold text-lg">{video.title}</h4>
@@ -137,7 +205,44 @@ export default function Home(){
             ))}
           </div>
         </section>
-        
+        {/*新規登録フォームセクション*/}
+        <section>
+          <h2>新規TAB譜を掲載</h2>
+          <form onSubmit={handleSubmit} >
+            <input
+              type="text"
+              placeholder="YouTube URL または 動画ID"
+              value={newVideo.youtube_id}
+              onChange={(e) => setNewVideo({...newVideo, youtube_id: e.target.value})}
+              required
+            />
+            <input
+              type="text"
+              placeholder="曲名"
+              value={newVideo.title}
+              onChange={(e) => setNewVideo({...newVideo, title: e.target.value})}
+              required
+            />
+            <input
+              type="text"
+              placeholder="アーティスト名"
+              value={newVideo.artist_name}
+              onChange={(e) => setNewVideo({...newVideo, artist_name: e.target.value})}
+              required
+            />
+            <select
+            value ={newVideo.instrument}
+            onChange={(e) => setNewVideo({...newVideo, instrument: e.target.value})}
+            >
+              <option value="Guitar">ギター</option>
+              <option value="Bass">ベース</option>
+              
+            </select>
+            <button type="submit">
+              登録
+            </button>
+          </form>
+        </section>
       </main>
     </div>  
   );
