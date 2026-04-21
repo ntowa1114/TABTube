@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef ,useMemo} from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 
 
 //URLからYouTube IDを抽出する関数
@@ -10,7 +10,7 @@ const extractYoutubeId = (url: string) => {
   // 1. まずは一般的なYouTube URLのパターンを試す
   const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
   const matches = url.match(regex);
-  
+
   if (matches && matches[1]) {
     return matches[1];
   }
@@ -24,46 +24,46 @@ const extractYoutubeId = (url: string) => {
   return null;
 };
 
-export default function Home(){
+export default function Home() {
   const [searchWord, setSearchWord] = useState("");
-  const [videos ,setVideos] = useState<any[]>([]);
-  const [selectedInstrument,setSelectedInstrument] = useState("all");
+  const [videos, setVideos] = useState<any[]>([]);
+  const [selectedInstrument, setSelectedInstrument] = useState("all");
   const [newVideo, setNewVideo] = useState({
     youtube_id: "",
-    title:"",
+    title: "",
     artist_name: "",
-    instrument: "Guitar"
+    instrument: ""
   });
-  const [sortType, setSortType] =useState('newest');
-  const [displayCount, setDisplayCount] =useState(10);
+  const [sortType, setSortType] = useState('newest');
+  const [displayCount, setDisplayCount] = useState(10);
 
   //並び替え
-  const processedVideos = useMemo(()=>{
-    if(!Array.isArray(videos)) return [];
+  const processedVideos = useMemo(() => {
+    if (!Array.isArray(videos)) return [];
 
     const result = [...videos];
 
-    result.sort((a,b)=>{
-      if(sortType === 'newest') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      if(sortType === 'oldest') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-      if(sortType === 'title') return a.title.localeCompare(b.title, 'ja');
-      if(sortType === 'artist') return a.artist_name.localeCompare(b.artist_name, 'ja');
+    result.sort((a, b) => {
+      if (sortType === 'newest') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      if (sortType === 'oldest') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      if (sortType === 'title') return a.title.localeCompare(b.title, 'ja');
+      if (sortType === 'artist') return a.artist_name.localeCompare(b.artist_name, 'ja');
       return 0;
     });
     return result;
-  },[videos, sortType]);
+  }, [videos, sortType]);
 
-  const visibleVideos =processedVideos.slice(0,displayCount);
+  const visibleVideos = processedVideos.slice(0, displayCount);
 
   const homeRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLDivElement>(null);
 
   //スクロール関数
-  const scrollTo =(ref: React.RefObject<HTMLDivElement>) => {
-    ref.current?.scrollIntoView({ behavior: 'smooth'});
+  const scrollTo = (ref: React.RefObject<HTMLDivElement>) => {
+    ref.current?.scrollIntoView({ behavior: 'smooth' });
   };
-  const handleSubmit = async (e: React.FormEvent) =>{
+  const handleSubmit = async (e: React.FormEvent) => {
     console.log("新規登録を開始します")
     e.preventDefault();
 
@@ -86,75 +86,81 @@ export default function Home(){
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(submitData),
-      
-    });
 
-    if(response.ok){
-      alert("登録完了");
-      setNewVideo({ youtube_id: "", title: "", artist_name: "", instrument: "Guitar" });
-      //登録後再読み込み
-      const res = await fetch('http://localhost:5000/api/videos');
-      const data = await res.json();
-      setVideos(data);
-    }
-  }catch(error){
-      console.error("登録失敗",error);
+      });
+
+      if (response.ok) {
+        alert("登録完了");
+        setNewVideo({ youtube_id: "", title: "", artist_name: "", instrument: "Guitar" });
+        //登録後再読み込み
+        const res = await fetch('http://localhost:5000/api/videos');
+        const data = await res.json();
+        setVideos(data);
+      }
+    } catch (error) {
+      console.error("登録失敗", error);
     }
   }
 
   //画面が表示されたとき
-  useEffect(()=>{ //useEffectにより変更によるリロードを最小限に抑える
-    const fetchVideos =async () =>{
-      try{
+  useEffect(() => { //useEffectにより変更によるリロードを最小限に抑える
+    const fetchVideos = async () => {
+      try {
         const response = await fetch('http://localhost:5000/api/videos'); //httpリクエストを送る
         const data = await response.json(); //レスポンスをjson形式で「data」に保存する
         setVideos(data); //取得したデータを状態変数のvideosに入れる
-      }catch(error){
-        console.error("データの取得に失敗しました(page.tsxより)",error);
+      } catch (error) {
+        console.error("データの取得に失敗しました(page.tsxより)", error);
       }
     };
     fetchVideos();
-  },[]); //useEffectの引数が[](空配列)だとリロード時一回実行
+  }, []); //useEffectの引数が[](空配列)だとリロード時一回実行
 
-  const dummyVideos =[
+  const dummyVideos = [
     { id: '1', title: 'Stay Gold', artist: 'Hi-STANDARD', instrument: 'Guitar' },
     { id: '2', title: 'Set the fire', artist: 'SHANK', instrument: 'Bass' }
   ];
 
-  const handleSearch = async (type:'title' | 'artist') =>{
-    if(!searchWord){
+  const handleSearch = async (type: 'title' | 'artist') => {
+    if (!searchWord) {
       // 検索ワードが空なら全件取得に戻す
       const res = await fetch('http://localhost:5000/api/videos');
       const data = await res.json();
       setVideos(data);
       return;
     }
-    try{
+    try {
       const res = await fetch(`http://localhost:5000/api/videos?search=${searchWord}&type=${type}&instrument=${selectedInstrument}`);
       console.log(`http://localhost:5000/api/videos?search=${searchWord}&type=${type}でリクエストを送信しました`)
       const data = await res.json();
       setVideos(data)
-    }catch(error){
-        console.error("検索に失敗しました",error);
+    } catch (error) {
+      console.error("検索に失敗しました", error);
     }
-    
+
   };
-  return(
-    <div className="min-h-screen bg-[#fcfcfc] text-gray-900 front-sans">
+  return (
+    <div ref={homeRef} className="min-h-screen bg-[#fcfcfc] text-gray-900 front-sans">
       <header ref={homeRef} className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
           {/*ロゴ画像 */}
-          <img
-            src="/logo.png"
-            alt="TABTube Logo"
-            width={150}
-            height={40}
-            className="h-19 w-auto object-contain mr-10"
-          />
+          <button
+            onClick={() => scrollTo(homeRef)}
+            className="hover:opacity-80 transition-opacity cursor-pointer focus:outline-none"
+          >
+            <img
+              src="/logo.png"
+              alt="TABTube Logo"
+              width={150}
+              height={40}
+              className="h-19 w-auto object-contain mr-10"
+            />
+          </button>
+
           {/*ヘッダーボタン */}
           <nav className="flex flex-1 gap-4 text-[15px] font-medium text-gray-600">
             <button onClick={() => scrollTo(homeRef)} className="hover:text-pink-600 transition cursor-pointer">ホーム</button>
-            <button onClick={() => {setSortType('newest'); scrollTo(listRef)}} className="hover:text-pink-600 transition cursor-pointer">新着動画</button>
+            <button onClick={() => { setSortType('newest'); scrollTo(listRef) }} className="hover:text-pink-600 transition cursor-pointer">新着動画</button>
             <button onClick={() => scrollTo(formRef)} className="hover:text-pink-600 transition cursor-pointer">新規登録</button>
           </nav>
           <button className="text-[15px] bg-pink-300 text-white px-2 py-2.5 rounded-lg font-bold hover:bg-purple-500 transition">ログイン</button>
@@ -164,52 +170,52 @@ export default function Home(){
         {/* 検索セクション */}
         <section className="mb-16">
           <div className="max-w-4xl mx-auto px-4 py-8">
-          <div className="relative group flex items-center">
-            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-              <svg
-                className ="h-5 w-5 text-gray-400 group-focus-within:text-pink-500 transition-colors"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-              </svg>
+            <div className="relative group flex items-center">
+              <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                <svg
+                  className="h-5 w-5 text-gray-400 group-focus-within:text-pink-500 transition-colors"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+              </div>
+              <input
+                type="text"
+                value={searchWord}
+                onChange={(e) => setSearchWord(e.target.value)}
+                placeholder="曲名/アーティスト名を入力..."
+                className="w-full bg-[#f7f8f9] border border-transparent rounded-full py-4 pl-14 pr-6 text-lg outline-none focus:bg-white focus:border-gray-200 focus:ring-4 focus:ring-pink-500 transition-all placeholder-gray-400 text-gray-700"
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch('title')}
+              />
+              <div className="absolute right-2 flex gap-1">
+                <button
+                  onClick={() => handleSearch('title')}
+                  className="bg-pink-300 text-white px-2 py-2.5 rounded-lg font-bold hover:bg-purple-500 transition">曲名で検索</button>
+                <button
+                  onClick={() => handleSearch('artist')}
+                  className="bg-pink-300 text-white px-2 py-2.5 rounded-lg font-bold hover:bg-purple-500 transition"
+                >
+                  アーティスト名で検索
+                </button>
+              </div>
+
             </div>
-            <input
-            type="text"
-            value={searchWord}
-            onChange={(e) => setSearchWord(e.target.value)}
-            placeholder ="曲名/アーティスト名を入力..."
-            className="w-full bg-[#f7f8f9] border border-transparent rounded-full py-4 pl-14 pr-6 text-lg outline-none focus:bg-white focus:border-gray-200 focus:ring-4 focus:ring-pink-500 transition-all placeholder-gray-400 text-gray-700"
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch('title')}
-            />
-            <div className="absolute right-2 flex gap-1">
-            <button
-            onClick={()=>handleSearch('title')}
-            className="bg-pink-300 text-white px-2 py-2.5 rounded-lg font-bold hover:bg-purple-500 transition">曲名で検索</button>
-            <button
-            onClick={()=>handleSearch('artist')}
-            className="bg-pink-300 text-white px-2 py-2.5 rounded-lg font-bold hover:bg-purple-500 transition"
-            >
-              アーティスト名で検索
-            </button>
-            </div>
-            
           </div>
-        </div>
-          <div className ="mt-6 flex gap-8 justify-center">
+          <div className="mt-6 flex gap-8 justify-center">
             {[
-              { id:'all', label: 'すべて'},
-              { id:'Guitar', label: 'ギター'},
-              { id:'Bass', label: 'ベース'}
-            ].map((item)=>(
+              { id: 'all', label: 'すべて' },
+              { id: 'Guitar', label: 'ギター' },
+              { id: 'Bass', label: 'ベース' }
+            ].map((item) => (
               <label key={item.id} className="flex items-center gap-2 cursor-pointer group">
                 <input
                   type="radio"
                   name="instrument"
                   className="w-4 h-4 accent-pink-600 cursor-pointer"
-                  checked={selectedInstrument ==item.id}
-                  onChange={()=>setSelectedInstrument(item.id)}
+                  checked={selectedInstrument == item.id}
+                  onChange={() => setSelectedInstrument(item.id)}
                 />
                 <span className="text-sm font-medium text-gray-600 group-hover:text-pink-600">
                   {item.label}
@@ -231,7 +237,7 @@ export default function Home(){
               <span>並び替え:</span>
               <select
                 value={sortType}
-                onChange={(e)=>setSortType(e.target.value)}
+                onChange={(e) => setSortType(e.target.value)}
               >
                 <option value="newest">新しい順</option>
                 <option value="oldest">古い順</option>
@@ -241,36 +247,36 @@ export default function Home(){
             </div>
           </div>
           {/*動画 */}
-          <div className="grid gap-4"> 
+          <div className="grid gap-4">
             {visibleVideos.map((video) => (
-              <div 
+              <div
                 key={video.id}
                 className="flex gap-4 p-4 bg-white hover:bg-purple-50/30 rounded-2xl transition-all border border-gray-800 hover:border-pink-100 hover:shadow-md cursor-pointer group">
                 <div className="relative w-48 h-28 flex-shrink-0 overflow-hidden rounded-xl shadow-sm">
                   <a href={`https://youtu.be/${video.youtube_id}`} target="_blank" rel="noopener noreferrer">
                     <img
-                    src={`https://img.youtube.com/vi/${video.youtube_id}/mqdefault.jpg`}
-                    alt={video.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
+                      src={`https://img.youtube.com/vi/${video.youtube_id}/mqdefault.jpg`}
+                      alt={video.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
                   </a>
-                   
+
                 </div>
-            {/*情報 */}
-            <div className="space-y-1">
-              <h3 className="font-bold text-lg">{video.title}</h3>
-              <p className="text-gray-500">{video.artist_name} </p>
-              <p className="inline-block bg-pink-500 text-white px-1 py-1.5 rounded-lg font-bold text-center">{video.instrument}</p>
-            </div>
-              
-              
-              
-            </div>
+                {/*情報 */}
+                <div className="space-y-1">
+                  <h3 className="font-bold text-lg">{video.title}</h3>
+                  <p className="text-gray-500">{video.artist_name} </p>
+                  <p className="inline-block bg-pink-500 text-white px-1 py-1.5 rounded-lg font-bold text-center">{video.instrument}</p>
+                </div>
+
+
+
+              </div>
             ))}
             {processedVideos.length > displayCount && (
               <div className="mt-10 text-center">
                 <button
-                  onClick={() =>setDisplayCount(prev => prev +10)}
+                  onClick={() => setDisplayCount(prev => prev + 10)}
                   className="px-8 py-3 border border-purple-200 text-pink-600 rounded-full font-bold hover:bg-purple-50 transition"
                 >
                   表示数を増やす(残り{processedVideos.length - displayCount} 件)
@@ -281,44 +287,86 @@ export default function Home(){
 
         </section>
         {/*新規登録フォームセクション*/}
-        <section>
-          <h2>新規TAB譜を掲載</h2>
-          <form onSubmit={handleSubmit} >
-            <input
-              type="text"
-              placeholder="YouTube URL または 動画ID"
-              value={newVideo.youtube_id}
-              onChange={(e) => setNewVideo({...newVideo, youtube_id: e.target.value})}
-              required
-            />
-            <input
-              type="text"
-              placeholder="曲名"
-              value={newVideo.title}
-              onChange={(e) => setNewVideo({...newVideo, title: e.target.value})}
-              required
-            />
-            <input
-              type="text"
-              placeholder="アーティスト名"
-              value={newVideo.artist_name}
-              onChange={(e) => setNewVideo({...newVideo, artist_name: e.target.value})}
-              required
-            />
-            <select
-            value ={newVideo.instrument}
-            onChange={(e) => setNewVideo({...newVideo, instrument: e.target.value})}
-            >
-              <option value="Guitar">ギター</option>
-              <option value="Bass">ベース</option>
-              
-            </select>
-            <button type="submit">
-              登録
-            </button>
-          </form>
+        <section className="mt-20 mb-32">
+          <div ref={formRef} className="text-center mb-10">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">お探しの曲が見つかりませんか？</h2>
+            <p className="text-gray-500">新しいTAB譜動画を登録しましょう！</p>
+          </div>
+          <div className="max-w-2xl mx-auto bg-white p-8 rounded-3xl border border-gray-100 shadow-xl shadow-purple-500/5">
+            <div className="flex items-center gap-2 mb-8 pb-4 border-b border-gray-50">
+
+              <h3 className="font-bold text-lg text-gray-800">【新規登録フォーム】</h3>
+            </div>
+            <form onSubmit={handleSubmit} >
+              {/*URL*/}
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700 ml-1">YouTubeリンク/動画ID</label>
+                <input
+                  type="text"
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  className="w-full px-5 py-4 rounded-2xl bg-gray-50 border border-transparent outline-none focus:bg-white focus:border-pink-300 focus:ring-4 focus:ring-purple-50 transition-all placeholder-gray-400"
+                  value={newVideo.youtube_id}
+                  onChange={(e) => setNewVideo({ ...newVideo, youtube_id: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/*曲名*/}
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-700 ml-1">曲名</label>
+                  <input
+                    type="text"
+                    placeholder="曲名"
+                    className="w-full px-5 py-4 rounded-2xl bg-gray-50 border border-transparent outline-none focus:bg-white focus:border-pink-300 focus:ring-4 focus:ring-purple-50 transition-all"
+                    value={newVideo.title}
+                    onChange={(e) => setNewVideo({ ...newVideo, title: e.target.value })}
+                    required
+                  />
+                </div>
+                {/*アーティスト名*/}
+                <div>
+                  <label className="text-sm font-bold text-gray-700 ml-1">アーティスト名</label>
+                  <input
+                    type="text"
+                    placeholder="アーティスト名"
+                    className="w-full px-5 py-4 rounded-2xl bg-gray-50 border border-transparent outline-none focus:bg-white focus:border-pink-300 focus:ring-4 focus:ring-purple-50 transition-all"
+                    value={newVideo.artist_name}
+                    onChange={(e) => setNewVideo({ ...newVideo, artist_name: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+              {/*楽器*/}
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700 ml-1">楽器</label>
+                <select
+                  className="w-full px-5 py-4 rounded-2xl bg-gray-50 border border-transparent outline-none focus:bg-white focus:border-pink-300 focus:ring-4 focus:ring-purple-50 transition-all appearance-none cursor-pointer"
+                  value={newVideo.instrument}
+                  onChange={(e) => setNewVideo({ ...newVideo, instrument: e.target.value })}
+                >
+                  <option value="" disabled>楽器を選択してください</option>
+                  <option value="Guitar">ギター</option>
+                  <option value="Bass">ベース</option>
+
+                </select>
+
+              </div>
+              <div className="pt-4">
+                <button type="submit" className="w-full py-4 bg-pink-300 text-white rounded-2xl font-bold text-lg hover:bg-purple-600 transition-all shadow-lg hover:shadow-purple-200 active:scale-[0.98]">
+                  登録
+                </button>
+              </div>
+
+
+
+
+
+            </form>
+
+          </div>
+
         </section>
       </main>
-    </div>  
+    </div>
   );
 }
