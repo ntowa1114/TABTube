@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-
+import Link from 'next/link'
 
 //URLからYouTube IDを抽出する関数
 const extractYoutubeId = (url: string) => {
@@ -141,11 +141,11 @@ export default function Home() {
   };
   return (
     <div ref={homeRef} className="min-h-screen bg-[#fcfcfc] text-gray-900 front-sans">
-      <header ref={homeRef} className="bg-white border-b sticky top-0 z-10">
+      <header ref={homeRef} className="bg-white border-b top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
           {/*ロゴ画像 */}
           <button
-            onClick={() => scrollTo(homeRef)}
+            
             className="hover:opacity-80 transition-opacity cursor-pointer focus:outline-none"
           >
             <img
@@ -251,26 +251,29 @@ export default function Home() {
             {visibleVideos.map((video) => (
               <div
                 key={video.id}
-                className="flex gap-4 p-4 bg-white hover:bg-purple-50/30 rounded-2xl transition-all border border-gray-800 hover:border-pink-100 hover:shadow-md cursor-pointer group">
+                className="flex items-center gap-4 p-4 bg-white hover:bg-purple-50/30 rounded-2xl transition-all border border-gray-800 hover:shadow-md group">
+                {/* サムネイル */}
                 <div className="relative w-48 h-28 flex-shrink-0 overflow-hidden rounded-xl shadow-sm">
                   <a href={`https://youtu.be/${video.youtube_id}`} target="_blank" rel="noopener noreferrer">
                     <img
                       src={`https://img.youtube.com/vi/${video.youtube_id}/mqdefault.jpg`}
                       alt={video.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 hover:shadow-md group"
                     />
                   </a>
-
                 </div>
-                {/*情報 */}
-                <div className="space-y-1">
-                  <h3 className="font-bold text-lg">{video.title}</h3>
-                  <p className="text-gray-500">{video.artist_name} </p>
-                  <p className="inline-block bg-pink-500 text-white px-1 py-1.5 rounded-lg font-bold text-center">{video.instrument}</p>
+                {/* 情報 */}
+                <div className="flex-1 space-y-1 min-w-0">
+                  <h3 className="font-bold text-lg truncate">{video.title}</h3>
+                  <p className="text-gray-500 truncate">{video.artist_name}</p>
+                  <p className="inline-block bg-pink-500 text-white px-2 py-1 rounded-lg font-bold text-sm">{video.instrument}</p>
                 </div>
-
-
-
+                {/* 練習ボタン */}
+                <Link href={"/video/" + video.youtube_id} className="flex-shrink-0">
+                  <button className="px-5 py-3 bg-pink-400 text-white rounded-xl font-bold hover:bg-purple-600 transition shadow-sm whitespace-nowrap hover:shadow-md group">
+                    この動画で練習 →
+                  </button>
+                </Link>
               </div>
             ))}
             {processedVideos.length > displayCount && (
