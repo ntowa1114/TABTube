@@ -60,7 +60,7 @@ export default function Home() {
   const formRef = useRef<HTMLDivElement>(null);
 
   //スクロール関数
-  const scrollTo = (ref: React.RefObject<HTMLDivElement>) => {
+  const scrollTo = (ref: React.RefObject<HTMLDivElement | null>) => {
     ref.current?.scrollIntoView({ behavior: 'smooth' });
   };
   const handleSubmit = async (e: React.FormEvent) => {
@@ -82,7 +82,7 @@ export default function Home() {
     };
 
     try {
-      const response = await fetch('http://localhost:5000/api/videos', {
+      const response = await fetch('/api/videos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(submitData),
@@ -93,7 +93,7 @@ export default function Home() {
         alert("登録完了");
         setNewVideo({ youtube_id: "", title: "", artist_name: "", instrument: "Guitar" });
         //登録後再読み込み
-        const res = await fetch('http://localhost:5000/api/videos');
+        const res = await fetch('/api/videos');
         const data = await res.json();
         setVideos(data);
       }
@@ -106,7 +106,7 @@ export default function Home() {
   useEffect(() => { //useEffectにより変更によるリロードを最小限に抑える
     const fetchVideos = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/videos'); //httpリクエストを送る
+        const response = await fetch('/api/videos');
         const data = await response.json(); //レスポンスをjson形式で「data」に保存する
         setVideos(data); //取得したデータを状態変数のvideosに入れる
       } catch (error) {
@@ -124,14 +124,13 @@ export default function Home() {
   const handleSearch = async (type: 'title' | 'artist') => {
     if (!searchWord) {
       // 検索ワードが空なら全件取得に戻す
-      const res = await fetch('http://localhost:5000/api/videos');
+      const res = await fetch('/api/videos');
       const data = await res.json();
       setVideos(data);
       return;
     }
     try {
-      const res = await fetch(`http://localhost:5000/api/videos?search=${searchWord}&type=${type}&instrument=${selectedInstrument}`);
-      console.log(`http://localhost:5000/api/videos?search=${searchWord}&type=${type}でリクエストを送信しました`)
+      const res = await fetch(`/api/videos?search=${searchWord}&type=${type}&instrument=${selectedInstrument}`);
       const data = await res.json();
       setVideos(data)
     } catch (error) {
