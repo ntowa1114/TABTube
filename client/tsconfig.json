@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "app/auth/callback/route.js", "app/login/page.jsx"  ],
   "exclude": ["node_modules"]
 }

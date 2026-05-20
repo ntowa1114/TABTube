@@ -4,11 +4,8 @@ const readline = require('readline');
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 
 const pool = new Pool({
-  user: 'postgres',
-  host: 'localhost',
-  database: 'tabtube_db',
-  password: '1114',
-  port: 5432,
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
 });
 
 async function getChannelInfo(handle) {

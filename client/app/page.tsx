@@ -36,6 +36,7 @@ export default function Home() {
   });
   const [sortType, setSortType] = useState('newest');
   const [displayCount, setDisplayCount] = useState(10);
+  const [searchedWord, setSearchedWord] = useState("");
 
   //並び替え
   const processedVideos = useMemo(() => {
@@ -121,30 +122,43 @@ export default function Home() {
     { id: '2', title: 'Set the fire', artist: 'SHANK', instrument: 'Bass' }
   ];
 
-  const handleSearch = async (type: 'title' | 'artist') => {
-    if (!searchWord) {
-      // 検索ワードが空なら全件取得に戻す
+  const handleReset = async () => {
+    setSearchWord("");
+    setSearchedWord("");
+    setSelectedInstrument("all");
+    setSortType("newest");
+    setDisplayCount(10);
+    const res = await fetch('/api/videos');
+    const data = await res.json();
+    setVideos(data);
+    scrollTo(homeRef);
+  };
+
+  const handleSearch = async (type: 'title' | 'artist', word?: string) => {
+    const query = word ?? searchWord;
+    if (!query) {
       const res = await fetch('/api/videos');
       const data = await res.json();
       setVideos(data);
+      setSearchedWord("");
       return;
     }
     try {
-      const res = await fetch(`/api/videos?search=${searchWord}&type=${type}&instrument=${selectedInstrument}`);
+      const res = await fetch(`/api/videos?search=${query}&type=${type}&instrument=${selectedInstrument}`);
       const data = await res.json();
-      setVideos(data)
+      setVideos(data);
+      setSearchedWord(query);
     } catch (error) {
       console.error("検索に失敗しました", error);
     }
-
   };
   return (
     <div ref={homeRef} className="min-h-screen bg-[#fcfcfc] text-gray-900 front-sans">
       <header ref={homeRef} className="bg-white border-b top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+        <div className="max-w-5xl mx-auto px-3 sm:px-4 py-3 sm:py-4 flex justify-between items-center">
           {/*ロゴ画像 */}
           <button
-            
+            onClick={handleReset}
             className="hover:opacity-80 transition-opacity cursor-pointer focus:outline-none"
           >
             <img
@@ -152,49 +166,51 @@ export default function Home() {
               alt="TABTube Logo"
               width={150}
               height={40}
-              className="h-19 w-auto object-contain mr-10"
+              className="h-8 sm:h-12 w-auto object-contain mr-2 sm:mr-10"
             />
           </button>
 
           {/*ヘッダーボタン */}
-          <nav className="flex flex-1 gap-4 text-[15px] font-medium text-gray-600">
-            <button onClick={() => scrollTo(homeRef)} className="hover:text-pink-600 transition cursor-pointer">ホーム</button>
+          <nav className="flex flex-1 gap-2 sm:gap-4 text-xs sm:text-[15px] font-medium text-gray-600">
+            <button onClick={handleReset} className="hover:text-pink-600 transition cursor-pointer">ホーム</button>
             <button onClick={() => { setSortType('newest'); scrollTo(listRef) }} className="hover:text-pink-600 transition cursor-pointer">新着動画</button>
             <button onClick={() => scrollTo(formRef)} className="hover:text-pink-600 transition cursor-pointer">新規登録</button>
           </nav>
-          <button className="text-[15px] bg-pink-300 text-white px-2 py-2.5 rounded-lg font-bold hover:bg-purple-500 transition">ログイン</button>
+          <button className="text-xs sm:text-[15px] bg-pink-300 text-white px-2 py-1.5 sm:py-2.5 rounded-lg font-bold hover:bg-purple-500 transition">ログイン</button>
         </div>
       </header>
       <main className="mb-16">
         {/* 検索セクション */}
         <section className="mb-16">
           <div className="max-w-4xl mx-auto px-4 py-8">
-            <div className="relative group flex items-center">
-              <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                <svg
-                  className="h-5 w-5 text-gray-400 group-focus-within:text-pink-500 transition-colors"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
+            <div className="flex flex-col sm:relative sm:flex-row sm:items-center gap-2 sm:gap-0">
+              <div className="group relative flex-1">
+                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                  <svg
+                    className="h-5 w-5 text-gray-400 group-focus-within:text-pink-500 transition-colors"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  value={searchWord}
+                  onChange={(e) => setSearchWord(e.target.value)}
+                  placeholder="曲名/アーティスト名を入力..."
+                  className="w-full bg-[#f7f8f9] border border-transparent rounded-full py-3 sm:py-4 pl-14 pr-6 sm:pr-56 text-base sm:text-lg outline-none focus:bg-white focus:border-gray-200 focus:ring-4 focus:ring-pink-500 transition-all placeholder-gray-400 text-gray-700"
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch('title')}
+                />
               </div>
-              <input
-                type="text"
-                value={searchWord}
-                onChange={(e) => setSearchWord(e.target.value)}
-                placeholder="曲名/アーティスト名を入力..."
-                className="w-full bg-[#f7f8f9] border border-transparent rounded-full py-4 pl-14 pr-6 text-lg outline-none focus:bg-white focus:border-gray-200 focus:ring-4 focus:ring-pink-500 transition-all placeholder-gray-400 text-gray-700"
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch('title')}
-              />
-              <div className="absolute right-2 flex gap-1">
+              <div className="flex gap-1 sm:absolute sm:right-2">
                 <button
                   onClick={() => handleSearch('title')}
-                  className="bg-pink-300 text-white px-2 py-2.5 rounded-lg font-bold hover:bg-purple-500 transition">曲名で検索</button>
+                  className="flex-1 sm:flex-none bg-pink-300 text-white px-2 py-2.5 rounded-lg text-sm font-bold hover:bg-purple-500 transition">曲名で検索</button>
                 <button
                   onClick={() => handleSearch('artist')}
-                  className="bg-pink-300 text-white px-2 py-2.5 rounded-lg font-bold hover:bg-purple-500 transition"
+                  className="flex-1 sm:flex-none bg-pink-300 text-white px-2 py-2.5 rounded-lg text-sm font-bold hover:bg-purple-500 transition"
                 >
                   アーティスト名で検索
                 </button>
@@ -224,13 +240,14 @@ export default function Home() {
           </div>
         </section>
         {/*動画一覧 */}
-        <section className="mb-20">
+        <section className="mb-20 px-4">
 
           <div ref={listRef} className="flex items-end justify-between mb-8">
             <h3 className="text-2xl font-bold flex items-center gap-3">
               <span className="w-1.5 h-7 bg-purple-600 rounded-full"></span>
               TAB譜 一覧
             </h3>
+
             {/*並び替え*/}
             <div>
               <span>並び替え:</span>
@@ -244,15 +261,17 @@ export default function Home() {
                 <option value="artist">アーティスト順</option>
               </select>
             </div>
+
           </div>
+          {searchedWord && <p>{searchedWord}の検索結果</p>}
           {/*動画 */}
           <div className="grid gap-4">
             {visibleVideos.map((video) => (
               <div
                 key={video.id}
-                className="flex items-center gap-4 p-4 bg-white hover:bg-purple-50/30 rounded-2xl transition-all border border-gray-800 hover:shadow-md group">
+                className="flex items-center gap-2 sm:gap-4 p-3 sm:p-4 bg-white hover:bg-purple-50/30 rounded-2xl transition-all border border-gray-800 hover:shadow-md group">
                 {/* サムネイル */}
-                <div className="relative w-48 h-28 flex-shrink-0 overflow-hidden rounded-xl shadow-sm">
+                <div className="relative w-28 h-20 sm:w-48 sm:h-28 flex-shrink-0 overflow-hidden rounded-xl shadow-sm">
                   <a href={`https://youtu.be/${video.youtube_id}`} target="_blank" rel="noopener noreferrer">
                     <img
                       src={`https://img.youtube.com/vi/${video.youtube_id}/mqdefault.jpg`}
@@ -261,17 +280,26 @@ export default function Home() {
                     />
                   </a>
                 </div>
-                {/* 情報 */}
-                <div className="flex-1 space-y-1 min-w-0">
-                  <h3 className="font-bold text-lg truncate">{video.title}</h3>
-                  <p className="text-gray-500 truncate">{video.artist_name}</p>
-                  <p className="inline-block bg-pink-500 text-white px-2 py-1 rounded-lg font-bold text-sm">{video.instrument}</p>
-                </div>
-                {/* 練習ボタン */}
-                <Link href={"/video/" + video.youtube_id} className="flex-shrink-0">
-                  <button className="px-5 py-3 bg-pink-400 text-white rounded-xl font-bold hover:bg-purple-600 transition shadow-sm whitespace-nowrap hover:shadow-md group">
-                    この動画で練習 →
-                  </button>
+                {/* 情報 + 練習ボタン */}
+                <Link href={"/video/" + video.youtube_id} className="flex-1 flex items-center gap-2 sm:gap-4 min-w-0">
+                  <div className="flex-1 space-y-1 min-w-0">
+                    <h3 className="font-bold text-sm sm:text-lg truncate">{video.title}</h3>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setSearchWord(video.artist_name);
+                        handleSearch('artist', video.artist_name);
+                        scrollTo(homeRef);
+                      }}
+                      className="text-gray-500 truncate hover:text-pink-500 hover:underline cursor-pointer transition text-left">{video.artist_name}</button>
+                    <p className="inline-block bg-pink-500 text-white px-2 py-1 rounded-lg font-bold text-sm">{video.instrument}</p>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <button className="px-3 py-2 sm:px-5 sm:py-3 bg-pink-400 text-white rounded-xl text-xs sm:text-base font-bold hover:bg-purple-600 transition shadow-sm whitespace-nowrap hover:shadow-md group">
+                      この動画で練習 →
+                    </button>
+                  </div>
                 </Link>
               </div>
             ))}
@@ -289,12 +317,12 @@ export default function Home() {
 
         </section>
         {/*新規登録フォームセクション*/}
-        <section className="mt-20 mb-32">
+        <section className="mt-20 mb-32 px-4">
           <div ref={formRef} className="text-center mb-10">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">お探しの曲が見つかりませんか？</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">お探しの曲が見つかりませんか？</h2>
             <p className="text-gray-500">新しいTAB譜動画を登録しましょう！</p>
           </div>
-          <div className="max-w-2xl mx-auto bg-white p-8 rounded-3xl border border-gray-100 shadow-xl shadow-purple-500/5">
+          <div className="max-w-2xl mx-auto bg-white p-4 sm:p-8 rounded-3xl border border-gray-100 shadow-xl shadow-purple-500/5">
             <div className="flex items-center gap-2 mb-8 pb-4 border-b border-gray-50">
 
               <h3 className="font-bold text-lg text-gray-800">【新規登録フォーム】</h3>
