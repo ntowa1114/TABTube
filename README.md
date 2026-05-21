@@ -1,7 +1,10 @@
 # TAB Tube
+
+
+
 サービスURL : https://tab-tube.vercel.app/
 
-![[OGP画像やメインのスクリーンショットのパス]]
+<img width="1536" height="1024" alt="TABTubeサムネイル" src="https://github.com/user-attachments/assets/4bfe6ff0-8b8e-466e-84cd-f705d1062bd6" />
 
 ### YouTubeのギター・ベースTAB譜動画を検索・管理できるライブラリアプリ
 
