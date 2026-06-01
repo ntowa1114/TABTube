@@ -1,5 +1,7 @@
 "use client";
 
+import {useAuth} from '@/components/AuthProvider'
+import LoginModal from '@/components/LoginModal'
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link'
 
@@ -37,6 +39,9 @@ export default function Home() {
   const [sortType, setSortType] = useState('newest');
   const [displayCount, setDisplayCount] = useState(10);
   const [searchedWord, setSearchedWord] = useState("");
+  const {user} = useAuth()
+  const [showLoginModal,setShowLoginModal] =useState(false)
+
 
   //並び替え
   const processedVideos = useMemo(() => {
@@ -176,7 +181,17 @@ export default function Home() {
             <button onClick={() => { setSortType('newest'); scrollTo(listRef) }} className="hover:text-pink-600 transition cursor-pointer">新着動画</button>
             <button onClick={() => scrollTo(formRef)} className="hover:text-pink-600 transition cursor-pointer">新規登録</button>
           </nav>
-          <button className="text-xs sm:text-[15px] bg-pink-300 text-white px-2 py-1.5 sm:py-2.5 rounded-lg font-bold hover:bg-purple-500 transition">ログイン</button>
+          <div className="relative">
+            {user ?(
+              <Link href="/mypage">
+                <button className="text-xs sm:text-[15px] bg-pink-300 text-white px-2 py-1.5 sm:py-2.5 rounded-lg font-bold hover:bg-purple-500 transition">マイページ</button>
+              </Link>
+            ):(<button 
+            onClick={() => setShowLoginModal(true)}
+            className="text-xs sm:text-[15px] bg-pink-300 text-white px-2 py-1.5 sm:py-2.5 rounded-lg font-bold hover:bg-purple-500 transition">ログイン</button>)}
+            {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)}/>}
+          </div>
+          
         </div>
       </header>
       <main className="mb-16">

@@ -3,6 +3,8 @@
 import { useParams } from 'next/navigation'
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import { useAuth } from '@/components/AuthProvider'
+import LoginModal from '@/components/LoginModal'
 
 export default function VideoViewPage() {
   const params = useParams()
@@ -11,6 +13,8 @@ export default function VideoViewPage() {
   const containerRef = useRef(null)
   const [playing, setPlaying] = useState(false)
   const [playbackRate, setPlaybackRate] = useState(1.0)
+  const { user } = useAuth()
+  const [showLoginModal, setShowLoginModal] = useState(false)
 
   useEffect(() => {
     if (!id || !containerRef.current) return
@@ -77,6 +81,21 @@ export default function VideoViewPage() {
             </Link>
 
           {/*ヘッダーボタン */}
+          <div className="relative">
+            {user? (
+              <Link href="/mypage">
+                <button className="text-[15px] bg-purple-500 text-white px-4 py-2.5 rounded-lg font-bold hover:opacity-80
+  transition shadow-sm">マイページ</button>
+              </Link>
+            ):(
+              <button
+              onClick={() => setShowLoginModal(true)}
+              className="text-[15px] bg-purple-500 text-white px-4 py-2.5 rounded-lg font-bold hover:opacity-80
+  transition shadow-sm">ログイン</button>
+              
+            )}
+            {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)}/>}
+          </div>
           <button className="text-[15px] bg-pink-400 text-white px-4 py-2.5 rounded-lg font-bold hover:opacity-80 transition shadow-sm">ログイン</button>
         </div>
       </header>
