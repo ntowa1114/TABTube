@@ -16,12 +16,15 @@
     const { data, error } = await supabase
       .from('favorites')
       .select('youtube_id')
+      .order('created_at',{ascending : false}) //追加新しい順
 
+    console.log('favorites error:', error)
+    console.log('favorites data:',data)
     if (error) return NextResponse.json({ error:
   error.message }, { status: 500 })
 
-    return NextResponse.json(data.map(f =>
-  f.youtube_id))
+    //youtube_idの配列を返す
+    return NextResponse.json(data.map(f =>f.youtube_id))
   }
 
   // お気に入りに追加

@@ -96,7 +96,7 @@ export default function VideoViewPage() {
             )}
             {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)}/>}
           </div>
-          <button className="text-[15px] bg-pink-400 text-white px-4 py-2.5 rounded-lg font-bold hover:opacity-80 transition shadow-sm">ログイン</button>
+          
         </div>
       </header>
     <main>
