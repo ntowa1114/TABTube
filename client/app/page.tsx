@@ -4,6 +4,7 @@ import {useAuth} from '@/components/AuthProvider'
 import LoginModal from '@/components/LoginModal'
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link'
+import FavoriteButton from '@/components/FavoriteButton'
 
 //URLからYouTube IDを抽出する関数
 const extractYoutubeId = (url: string) => {
@@ -41,7 +42,7 @@ export default function Home() {
   const [searchedWord, setSearchedWord] = useState("");
   const {user} = useAuth()
   const [showLoginModal,setShowLoginModal] =useState(false)
-
+  const [favorites,setFavorites] = useState<string[]>([])
 
   //並び替え
   const processedVideos = useMemo(() => {
@@ -120,12 +121,50 @@ export default function Home() {
       }
     };
     fetchVideos();
-  }, []); //useEffectの引数が[](空配列)だとリロード時一回実行
+  }, []); 
 
-  const dummyVideos = [
-    { id: '1', title: 'Stay Gold', artist: 'Hi-STANDARD', instrument: 'Guitar' },
-    { id: '2', title: 'Set the fire', artist: 'SHANK', instrument: 'Bass' }
-  ];
+  //お気に入り一覧の取得（ログイン時のみ）
+  useEffect(() => {
+    if (!user){
+      setFavorites([])
+      return
+    }
+    const fetchFavorites = async () => {
+      
+      const res = await fetch('/api/favorites')
+      const data = await res.json()
+      
+      if(Array.isArray(data)) setFavorites(data)
+    }
+    fetchFavorites()
+  },[user])
+  
+  const handleFavoriteToggle = async (videoId :string) => {
+    if(!user){
+      setShowLoginModal(true)
+      return
+    }
+    const isFavorited = favorites.includes(videoId)
+
+    if(isFavorited){ //お気に入りに入っているとき
+      //prev:更新前　filter:条件検索
+      setFavorites(prev => prev.filter(id => id !==videoId))
+      await fetch('/api/favorites',{
+        method:'DELETE',
+        headers:{ 'Content-Type' : 'application/json'},
+        body: JSON.stringify({ youtube_id: videoId }),
+      })
+    } else{ //お気に入りに入っていないとき
+      setFavorites(prev => [...prev, videoId])
+      await fetch('/api/favorites',{
+        method: 'POST',
+        headers: {'Content-Type' : 'application/json'},
+        body: JSON.stringify({ youtube_id:videoId}),
+      })
+    
+
+    }
+  }
 
   const handleReset = async () => {
     setSearchWord("");
@@ -279,7 +318,7 @@ export default function Home() {
 
           </div>
           {searchedWord && <p>{searchedWord}の検索結果</p>}
-          {/*動画 */}
+          {/*動画リスト */}
           <div className="grid gap-4">
             {visibleVideos.map((video) => (
               <div
@@ -309,6 +348,11 @@ export default function Home() {
                       }}
                       className="text-gray-500 truncate hover:text-pink-500 hover:underline cursor-pointer transition text-left">{video.artist_name}</button>
                     <p className="inline-block bg-pink-500 text-white px-2 py-1 rounded-lg font-bold text-sm">{video.instrument}</p>
+                    <FavoriteButton
+                    videoId={video.youtube_id}
+                    isFavorited={favorites.includes(video.youtube_id)}
+                    onToggle={handleFavoriteToggle}
+                    ></FavoriteButton>
                   </div>
                   <div className="flex-shrink-0">
                     <button className="px-3 py-2 sm:px-5 sm:py-3 bg-pink-400 text-white rounded-xl text-xs sm:text-base font-bold hover:bg-purple-600 transition shadow-sm whitespace-nowrap hover:shadow-md group">
