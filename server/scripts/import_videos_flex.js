@@ -2,6 +2,17 @@ const { Pool } = require('pg');
 const readline = require('readline');
 
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
+// 不正な文字を含む行を検出
+const INVALID_CHARS = ['や', '『', '』'];
+// 不正な文字を除去する
+const STRIP_CHARS = ['や', '『', '』'];
+function stripInvalidChars(text) {
+  let result = text;
+  for (const char of STRIP_CHARS) {
+    result = result.split(char).join('');
+  }
+  return result.trim();
+}
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -158,12 +169,12 @@ async function main() {
     if (parsed) {
       for (const instrument of parsed.instruments) {
         rows.push({
-          youtube_id: video.youtube_id,
-          original_title: video.title,
-          title: parsed.title,
-          artist_name: parsed.artist_name,
-          instrument,
-        });
+            youtube_id: video.youtube_id,
+            original_title: video.title,
+            title: stripInvalidChars(parsed.title),
+            artist_name: stripInvalidChars(parsed.artist_name),
+            instrument,
+          });
       }
     } else {
       failed.push(video.title);

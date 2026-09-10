@@ -6,6 +6,8 @@ const cors =require('cors');
 const app = express(); //サーバー作る
 const PORT =5000; //ポート5000番設定
 
+require('dotenv').config()
+
 //ミドルウェア→ブラウザとサーバー処理の間
 
 app.use(cors()); //フロントエンドとバックエンドのポートのつなぎ
@@ -14,11 +16,8 @@ app.use(express.json()); //JSON使えるように
 //データベース接続設定
 
 const pool = new Pool({
-   user: 'postgres',
-   host:'localhost' ,
-   database:'tabtube_db',
-   password:'1114',
-   port: 5432
+   connectionString: process.env.DATABASE_URL,
+   ssl:{rejectUnauthorized: false},
 });
 // DB接続テスト
 
