@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-type Params = { params: Promise< id: string >}
+type Params = { params: Promise<{ id: string }> }
 
 //動画削除
 
 export async function DELETE(_request: Request, { params }: Params){
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data:{ user }} = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, {status: 401 })
     
@@ -41,7 +41,7 @@ export async function PATCH(request: Request, { params }: Params){
     const { data: neighbor } = await supabase
         .from('playlist_videos')
         .select('*')
-        .eq('playlit_id',target.plsylist_id)
+        .eq('playlist_id', target.playlist_id)
         .eq('order_index', direction == 'up' ? target.order_index-1 : target.order_index+1)
         .single()
 
