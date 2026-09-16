@@ -2,6 +2,7 @@
 import { useAuth } from '@/components/AuthProvider'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import AddToPlaylistModal from '@/components/AddToPlaylistModal'
 
 type Video = {
     youtube_id: string
@@ -14,15 +15,23 @@ export default function MyPage() {
     const { user, loading, signOut } = useAuth()
     const [favoriteVideos, setFavoriteVideos] = useState<Video[]>([])
     const [fetching, setFetching] = useState(true)
+    const [playlists, setPlaylists] = useState<{ id: string; name: string }[]>([])
+    const [playlistTargetVideo, setPlaylistTargetVideo] = useState<{
+        youtube_id: string
+        title: string
+        artist_name: string
+        instrument: string
+    } | null>(null)
 
     useEffect(() => {
         if (!user) return
 
         const fetchData = async () => {
             //promise.all:複数の非同期処理が終わるまで待つ
-            const [favRes, videoRes] = await Promise.all([
+            const [favRes, videoRes, plRes] = await Promise.all([
                 fetch('/api/favorites'),
                 fetch('/api/videos'),
+                fetch('/api/playlists'),
             ])
             //お気に入り一覧のid
             const favData = await favRes.json()
@@ -35,6 +44,10 @@ export default function MyPage() {
                 .filter((v): v is Video => v !== undefined)
 
             setFavoriteVideos(matched)
+
+            const plData = await plRes.json()
+            if (Array.isArray(plData)) setPlaylists(plData)
+
             setFetching(false)
         }
         fetchData()
@@ -101,31 +114,75 @@ export default function MyPage() {
                     ) : (
                         <div className="grid gap-3">
                             {favoriteVideos.map(video => (
-                                <Link
+                                <div
                                     key={video.youtube_id}
-                                    href={`/video/${video.youtube_id}`}
                                     className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-100 hover:shadow-md hover:border-pink-100 transition group"
                                 >
-                                    {/* サムネイル */}
-                                    <img
+                                    <Link href={`/video/${video.youtube_id}`} className="flex items-center gap-4 flex-1 min-w-0">
+                                        {/* サムネイル */}
+                                        <img
+                                            src={`https://img.youtube.com/vi/${video.youtube_id}/mqdefault.jpg`}
+                                            alt={video.title}
+                                            className="w-32 h-20 object-cover rounded-xl flex-shrink-0 group-hover:scale-105 transition-transform"
+                                        />
+                                        {/* 情報 */}
+                                        <div className="space-y-1 min-w-0">
+                                            <p className="font-bold text-gray-800 truncate">{video.title}</p>
+                                            <p className="text-sm text-gray-500 truncate">{video.artist_name}</p>
+                                            <span className="inline-block bg-pink-500 text-white text-xs px-2 py-0.5 rounded-lg font-bold">
+                                                {video.instrument}
+                                            </span>
+                                        </div>
+                                    </Link>
+                                    <button
+                                        onClick={() => setPlaylistTargetVideo(video)}
+                                        className="text-lg text-gray-400 hover:text-pink-500 hover:scale-125 transition-transform flex-shrink-0"
+                                        aria-label="プレイリストに追加"
+                                    >
+                                        ＋
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </section>
 
-                                        src={`https://img.youtube.com/vi/${video.youtube_id}/mqdefault.jpg`}
-                                        alt={video.title}
-                                        className="w-32 h-20 object-cover rounded-xl flex-shrink-0 group-hover:scale-105 transition-transform"
-                                    />
-                                    {/* 情報 */}
-                                    <div className="space-y-1 min-w-0">
-                                        <p className="font-bold text-gray-800 truncate">{video.title}</p>
-                                        <p className="text-sm text-gray-500 truncate">{video.artist_name}</p>
-                                        <span className="inline-block bg-pink-500 text-white text-xs px-2 py-0.5 rounded-lg font-bold">
-                                            {video.instrument}
-                                        </span>
-                                    </div>
+                {/* プレイリスト一覧 */}
+                <section>
+                    <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <span>≡</span>
+                        プレイリスト
+                        <span className="text-sm font-normal text-gray-400">{playlists.length}件</span>
+                    </h2>
+                    {playlists.length === 0 ? (
+                        <div className="text-center py-16 text-gray-400">
+                            <p className="text-4xl mb-3">♪</p>
+                            <p className="text-sm">プレイリストはまだありません</p>
+                            <p className="text-xs mt-1">動画の「＋」ボタンから作成できます</p>
+                        </div>
+                    ) : (
+                        <div className="grid gap-3">
+                            {playlists.map(pl => (
+                                <Link
+                                    key={pl.id}
+                                    href={`/playlist/${pl.id}`}
+                                    className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 hover:shadow-md hover:border-pink-100 transition"
+                                >
+                                    <span className="font-bold text-gray-800">{pl.name}</span>
+                                    <span className="text-gray-400 text-sm">→</span>
                                 </Link>
                             ))}
                         </div>
                     )}
                 </section>
+
+                {/* プレイリスト追加モーダル */}
+                {playlistTargetVideo && (
+                    <AddToPlaylistModal
+                        video={playlistTargetVideo}
+                        onClose={() => setPlaylistTargetVideo(null)}
+                    />
+                )}
             </main>
         </div>
 

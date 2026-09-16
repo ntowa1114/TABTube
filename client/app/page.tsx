@@ -2,6 +2,7 @@
 
 import {useAuth} from '@/components/AuthProvider'
 import LoginModal from '@/components/LoginModal'
+import AddToPlaylistModal from '@/components/AddToPlaylistModal'
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link'
 import FavoriteButton from '@/components/FavoriteButton'
@@ -43,6 +44,12 @@ export default function Home() {
   const {user} = useAuth()
   const [showLoginModal,setShowLoginModal] =useState(false)
   const [favorites,setFavorites] = useState<string[]>([])
+  const [playlistTargetVideo, setPlaylistTargetVideo] = useState<{
+    youtube_id: string
+    title: string
+    artist_name: string
+    instrument: string
+  } | null>(null)
 
   //並び替え
   const processedVideos = useMemo(() => {
@@ -230,6 +237,12 @@ export default function Home() {
             className="text-xs sm:text-[15px] bg-pink-300 text-white px-2 py-1.5 sm:py-2.5 rounded-lg font-bold hover:bg-purple-500 transition">ログイン</button>)}
             {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)}/>}
           </div>
+          {playlistTargetVideo && (
+            <AddToPlaylistModal
+              video={playlistTargetVideo}
+              onClose={() => setPlaylistTargetVideo(null)}
+            />
+          )}
           
         </div>
       </header>
@@ -353,6 +366,18 @@ export default function Home() {
                     isFavorited={favorites.includes(video.youtube_id)}
                     onToggle={handleFavoriteToggle}
                     ></FavoriteButton>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        if (!user) { setShowLoginModal(true); return }
+                        setPlaylistTargetVideo(video)
+                      }}
+                      className="text-lg transition-transform hover:scale-125"
+                      aria-label="プレイリストに追加"
+                    >
+                      ＋
+                    </button>
                   </div>
                   <div className="flex-shrink-0">
                     <button className="px-3 py-2 sm:px-5 sm:py-3 bg-pink-400 text-white rounded-xl text-xs sm:text-base font-bold hover:bg-purple-600 transition shadow-sm whitespace-nowrap hover:shadow-md group">
